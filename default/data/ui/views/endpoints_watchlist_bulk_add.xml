@@ -1,0 +1,92 @@
+<form version="1.1" script="common.js,endpoints_watchlist_bulk_add.js" stylesheet="endpoints_watchlist.css">
+  <label>Endpoints Watchlist - Bulk add</label>
+  <search id="createSearch" depends="$atok_macs$, $atok_operating_system_type$, $atok_risk$, $atok_expire$, $atok_monitor$, $atok_reason$, $atok_reference$">
+  <query>
+    | inputlookup endpoints_watchlist
+    | append [stats count
+      | eval mac="$atok_macs$"
+      | eval operating_system_type="$atok_operating_system_type$"
+      | eval creator="$env:user$"
+      | eval created=now()
+      | eval risk="$atok_risk$"
+      | eval expire="$atok_expire$"
+      | eval monitor="$atok_monitor$"
+      | eval reason="$atok_reason$"
+      | eval reference="$atok_reference$"
+      | makemv delim="|" mac |  mvexpand mac ]
+    | table mac, creator, created, risk, expire, monitor, reason, reference
+    | outputlookup endpoints_watchlist
+  </query>
+</search>
+<search id="auditSearch" depends="$atok_action_audit$, $atok_macs$, $atok_operating_system_type$, $atok_risk$, $atok_expire$, $atok_monitor$, $atok_reason$, $atok_reference$">
+  <query>
+  | makeresults
+  | eval _time=now()
+  | eval action="create"
+  | eval creator="$env:user$"
+  | eval mac="$atok_macs$"
+  | eval operating_system_type="$atok_operating_system_type$"
+  | eval risk="$atok_risk$"
+  | eval expire="$atok_expire$"
+  | eval monitor="$atok_monitor$"
+  | eval reason="$atok_reason$"
+  | eval reference="$atok_reference$"
+  | makemv delim="|" mac |  mvexpand mac
+  | collect index=`endpoints_watchlist_index` source="endpoints_watchlist" sourcetype=`endpoints_watchlist_sourcetype`
+  </query>
+</search>
+  <row>
+    <panel id="EndpointsFormPanel">
+      <html>
+        <div id="progress"></div>
+        <form>
+          <div>
+            <p><a href="endpoints_watchlist" class="btn btn-info">Go back</a></p>
+            <p class="box-success">Successfully added</p>
+          </div>
+          <div>
+          	<label for="tok_macs">MACs</label>
+          	<textarea style="width: 95%" name="tok_macs" rows="5"/>
+          </div>
+          <div>
+          	<label for="tok_operating_system_type">Operating system type</label>
+          	<input style="width: 95%" type="text" name="tok_operating_system_type"/>
+          </div>
+          <div>
+          	<label for="tok_risk">Risk level</label>
+            <select style="width: 95%" name="tok_risk">
+              <option value="0">None</option>
+              <option value="1">Low</option>
+              <option value="2">Medium</option>
+              <option value="3">High</option>
+              <option value="4">Critical</option>
+            </select>
+          </div>
+          <div>
+          	<label for="tok_expire">Expire</label>
+            <select style="width: 95%" name="tok_expire">
+              <option value="1">1 month</option>
+              <option value="3">3 months</option>
+              <option value="6">6 months</option>
+              <option value="9">9 months</option>
+              <option value="12">1 year</option>
+              <option value="0">Never</option>
+            </select>
+          </div>
+          <div>
+          	<label for="tok_reason">Reason</label>
+          	<textarea style="width: 95%" name="tok_reason" rows="5"/>
+          </div>
+          <div>
+          	<label for="tok_reference">Reference</label>
+            <input style="width: 95%" type="text" name="tok_reference"/>
+          </div>
+          <div>
+            <button id="submitButton" class="btn btn-primary">Submit</button>
+            <button id="clearButton" class="btn btn-warning">Clear</button>
+          </div>
+        </form>
+      </html>
+    </panel>
+  </row>
+</form>
